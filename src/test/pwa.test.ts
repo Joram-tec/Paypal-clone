@@ -33,7 +33,7 @@ describe("Pesa Wallet PWA", () => {
       (entry: { sizes: string }) => entry.sizes === `${size}x${size}`,
     );
     expect(icon).toMatchObject({
-      src: `icons/paypal-${size}.png`,
+      src: `icons/paypal-${size}-v2.png`,
       type: "image/png",
       purpose: "any",
     });
@@ -54,13 +54,13 @@ describe("Pesa Wallet PWA", () => {
       "width=device-width, initial-scale=1.0, viewport-fit=cover",
     );
     expect(document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute("href")).toBe(
-      "%BASE_URL%icons/apple-touch-icon.png?v=2",
+      "%BASE_URL%icons/apple-touch-icon-v3.png",
     );
     expect(document.querySelector('link[rel="icon"]')?.getAttribute("href")).toBe(
       "%BASE_URL%icons/favicon-32.png",
     );
     expectPngSize("icons/favicon-32.png", 32);
-    expectPngSize("icons/apple-touch-icon.png", 180);
+    expectPngSize("icons/apple-touch-icon-v3.png", 180);
   });
 
   it("hides the preview status bar on mobile and standalone displays", () => {

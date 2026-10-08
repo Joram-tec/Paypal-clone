@@ -526,7 +526,6 @@ function AmountScreen({
           </button>
           <button type="submit">Send</button>
         </div>
-        <p className="demo-caption">Demo only. No real payments or requests.</p>
       </form>
       <div className="amount-keypad page-padding" role="group" aria-label="Amount keypad">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "backspace"].map((key) => (

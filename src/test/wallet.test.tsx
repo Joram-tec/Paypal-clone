@@ -171,6 +171,7 @@ describe("Local wallet interactions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send/Request" }));
     fireEvent.click(screen.getByRole("button", { name: /Imposter Here/ }));
     expect(screen.getByRole("heading", { name: "Amount" })).toBeInTheDocument();
+    expect(screen.queryByText("Demo only. No real payments or requests.")).not.toBeInTheDocument();
     expect(
       within(screen.getByRole("main", { name: "Amount screen" })).getByText("@doersjit01"),
     ).toBeVisible();
