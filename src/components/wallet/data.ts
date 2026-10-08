@@ -22,7 +22,7 @@ export const openingBalance = 0;
 export const balance = 0;
 export const card = { bank: "Your Bank", type: "Debit", lastFour: "6277" };
 export const appVersion = "8.107.2";
-export const activityMonth = "Oct 2026";
+export const activityPeriod = "Jun - Oct 2026";
 
 const incomeItems = [
   {
@@ -33,49 +33,49 @@ const incomeItems = [
   },
   {
     name: "Lakeview Consulting",
-    date: "6 Oct 2026",
+    date: "22 Sep 2026",
     category: "Invoice",
     amount: 33000,
   },
   {
     name: "Savannah Media Ltd",
-    date: "5 Oct 2026",
+    date: "4 Sep 2026",
     category: "Project",
     amount: 27000,
   },
   {
     name: "Nairobi Creative Co",
-    date: "4 Oct 2026",
+    date: "19 Aug 2026",
     category: "Project",
     amount: 17000,
   },
   {
     name: "Kijani Design Studio",
-    date: "3 Oct 2026",
+    date: "3 Aug 2026",
     category: "Invoice",
     amount: 19000,
   },
   {
     name: "Grace Njeri",
-    date: "2 Oct 2026",
+    date: "17 Jul 2026",
     category: "Transfer",
     amount: 2000,
   },
   {
     name: "Amara Mwangi",
-    date: "2 Oct 2026",
+    date: "2 Jul 2026",
     category: "Transfer",
     amount: 3000,
   },
   {
     name: "James Otieno",
-    date: "1 Oct 2026",
+    date: "18 Jun 2026",
     category: "Transfer",
     amount: 1000,
   },
   {
     name: "David Kamau",
-    date: "1 Oct 2026",
+    date: "2 Jun 2026",
     category: "Transfer",
     amount: 3000,
   },
@@ -101,11 +101,19 @@ export const txns: Txn[] = incomeItems.flatMap((income, index): Txn[] => [
   },
 ]);
 
-export const contacts = [{ name: "Amara Mwangi", handle: "@amaramwangi" }];
+export type Contact = { name: string; handle: string };
+export const contacts: Contact[] = [
+  { name: "Imposter Here", handle: "@doersjit01" },
+  { name: "Amara Mwangi", handle: "@amaramwangi" },
+];
 
-export const fmt = (amount: number, signed = false) =>
+export const fmt = (
+  amount: number,
+  signed = false,
+  minimumFractionDigits = Number.isInteger(amount) ? 0 : 2,
+) =>
   `${signed ? (amount < 0 ? "-" : "+") : ""}US$${Math.abs(amount).toLocaleString("en-US", {
-    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    minimumFractionDigits,
     maximumFractionDigits: 2,
   })}`;
 
@@ -125,10 +133,10 @@ export const notifications = [
   },
   ...txns
     .filter((transaction) => transaction.amount > 0)
-    .map((transaction) => ({
+    .map((transaction, index) => ({
       title: `You received ${fmt(transaction.amount)}`,
       detail: `from ${transaction.name}`,
       age: transaction.date,
-      read: transaction.date === "1 Oct 2026",
+      read: index >= 7,
     })),
 ];

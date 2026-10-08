@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import {
   Menu,
   Bell,
@@ -28,6 +28,7 @@ import {
   Eye,
   EyeOff,
   X,
+  Delete,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -38,9 +39,10 @@ import {
   balance,
   card,
   appVersion,
-  activityMonth,
+  activityPeriod,
   notifications,
   type Txn,
+  type Contact,
 } from "./data";
 import "./wallet.css";
 
@@ -48,6 +50,8 @@ type Screen = "login" | "home" | "send" | "wallet" | "notifications" | "profile"
 type WalletTab = "wallet" | "activity";
 type Navigate = (screen: Screen, tab?: WalletTab) => void;
 type ShowNotice = (title: string, message?: string) => void;
+type OpenTransaction = (transaction: Txn) => void;
+type DetailView = { type: "transaction"; transaction: Txn } | { type: "amount"; contact: Contact };
 
 function Brand({ variant = "solid" }: { variant?: "solid" | "outline" | "notification" }) {
   return (
@@ -186,24 +190,30 @@ function StoreIcon({ suggested = false }: { suggested?: boolean }) {
   );
 }
 
-function TxnRow({ transaction }: { transaction: Txn }) {
+function TxnRow({ transaction, onOpen }: { transaction: Txn; onOpen: OpenTransaction }) {
   return (
     <article className="transaction">
-      <div className="transaction-heading">
-        <StoreIcon />
-        <div>
-          <h3>{transaction.name}</h3>
-          <p>{transaction.date}</p>
+      <button
+        className="transaction-button"
+        aria-label={`View ${transaction.kind} ${transaction.amount > 0 ? "from" : "to"} ${transaction.name}, ${transaction.date}, ${fmt(transaction.amount, true)}`}
+        onClick={() => onOpen(transaction)}
+      >
+        <div className="transaction-heading">
+          <StoreIcon />
+          <div>
+            <h3>{transaction.name}</h3>
+            <p>{transaction.date}</p>
+          </div>
         </div>
-      </div>
-      <div className="transaction-summary">
-        <span>
-          {transaction.kind} · {transaction.category}
-        </span>
-        <strong className={transaction.amount > 0 ? "received" : ""}>
-          {fmt(transaction.amount, true)}
-        </strong>
-      </div>
+        <div className="transaction-summary">
+          <span>
+            {transaction.kind} · {transaction.category}
+          </span>
+          <strong className={transaction.amount > 0 ? "received" : ""}>
+            {fmt(transaction.amount, true)}
+          </strong>
+        </div>
+      </button>
     </article>
   );
 }
@@ -317,7 +327,15 @@ function Login({ go, notice }: { go: Navigate; notice: ShowNotice }) {
   );
 }
 
-function HomeScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
+function HomeScreen({
+  go,
+  notice,
+  openTransaction,
+}: {
+  go: Navigate;
+  notice: ShowNotice;
+  openTransaction: OpenTransaction;
+}) {
   return (
     <div className="home-screen page-padding">
       <Toolbar go={go} notice={notice} />
@@ -326,7 +344,7 @@ function HomeScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
           <Brand />
         </span>
         <span>
-          <strong>{fmt(balance)}</strong>
+          <strong>{fmt(balance, false, 2)}</strong>
           <span>PayPal balance</span>
         </span>
       </button>
@@ -364,7 +382,7 @@ function HomeScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
       </button>
       <section className="transaction-list" aria-label="Recent transactions">
         {txns.slice(0, 6).map((transaction) => (
-          <TxnRow key={transaction.id} transaction={transaction} />
+          <TxnRow key={transaction.id} transaction={transaction} onOpen={openTransaction} />
         ))}
         <button className="see-more text-link" onClick={() => go("wallet", "activity")}>
           See more
@@ -374,11 +392,16 @@ function HomeScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
   );
 }
 
-function SendScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
+function SendScreen({
+  go,
+  notice,
+  openAmount,
+}: {
+  go: Navigate;
+  notice: ShowNotice;
+  openAmount: (contact: Contact) => void;
+}) {
   const [query, setQuery] = useState("");
-  const [recipient, setRecipient] = useState<string | null>(null);
-  const [amount, setAmount] = useState("");
-  const [error, setError] = useState("");
   const list = contacts.filter((contact) =>
     `${contact.name} ${contact.handle}`.toLowerCase().includes(query.toLowerCase()),
   );
@@ -390,11 +413,7 @@ function SendScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
       <section className="suggested">
         <h2>Suggested</h2>
         {list.map((contact) => (
-          <button
-            key={contact.handle}
-            className="contact"
-            onClick={() => setRecipient(contact.name)}
-          >
+          <button key={contact.handle} className="contact" onClick={() => openAmount(contact)}>
             <StoreIcon suggested />
             <span>
               <strong>{contact.name}</strong>
@@ -405,61 +424,173 @@ function SendScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
         ))}
         {list.length === 0 && <p className="empty-results">No matches.</p>}
       </section>
-      {recipient && (
-        <div className="mock-overlay">
-          <form
-            className="mock-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="send-title"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const value = Number(amount);
-              if (!Number.isFinite(value) || value <= 0 || !/^\d+(\.\d{1,2})?$/.test(amount)) {
-                setError("Enter a positive USD amount with no more than two decimal places.");
-                return;
-              }
-              setRecipient(null);
-              setAmount("");
-              setError("");
-              notice(
-                "Demo transfer",
-                `${fmt(value)} to ${recipient}. No money was sent; your mock balance is unchanged.`,
-              );
-            }}
-          >
-            <button
-              className="dialog-close"
-              type="button"
-              aria-label="Close"
-              onClick={() => {
-                setRecipient(null);
-                setError("");
-              }}
-            >
-              <X />
-            </button>
-            <h2 id="send-title">Send to {recipient}</h2>
-            <p>Demo only. No money will be sent.</p>
-            <label className="amount-field">
-              USD
-              <input
-                aria-label="Amount in USD"
-                inputMode="decimal"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                placeholder="0.00"
-              />
-            </label>
-            {error && (
-              <p role="alert" className="input-error">
-                {error}
-              </p>
-            )}
-            <button className="mock-primary">Preview transfer</button>
-          </form>
+    </div>
+  );
+}
+
+function AmountScreen({
+  contact,
+  onBack,
+  notice,
+}: {
+  contact: Contact;
+  onBack: () => void;
+  notice: ShowNotice;
+}) {
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const updateAmount = (next: string) => {
+    setAmount(next);
+    setError("");
+  };
+  const preview = (action: "Request" | "Send") => {
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0 || !/^\d+(\.\d{1,2})?$/.test(amount)) {
+      setError("Enter a positive USD amount with no more than two decimal places.");
+      input.current?.focus();
+      return;
+    }
+    notice(
+      `Demo ${action.toLowerCase()}`,
+      `${action === "Send" ? "Send" : "Request"} ${fmt(value, false, 2)} ${action === "Send" ? "to" : "from"} ${contact.name} (${contact.handle}).${note.trim() ? ` Note: ${note.trim()}.` : ""} No money was sent and no request was created; your mock balance is unchanged.`,
+    );
+  };
+  const pressKey = (key: string) => {
+    if (key === "backspace") {
+      updateAmount(amount.slice(0, -1));
+    } else if (key === "." && amount.includes(".")) {
+      setError("The amount can contain only one decimal point.");
+    } else {
+      const next = key === "." && amount === "" ? "0." : amount + key;
+      if (!/^\d*(\.\d{0,2})?$/.test(next)) {
+        setError("Use no more than two decimal places.");
+      } else {
+        updateAmount(next);
+      }
+    }
+  };
+  return (
+    <div className="amount-screen">
+      <SubHeader title="Amount" onBack={onBack} />
+      <div className="amount-recipient page-padding">
+        <span className="recipient-avatar" role="img" aria-label={`${contact.name} avatar`}>
+          {contact.name
+            .split(" ")
+            .map((word) => word[0])
+            .join("")}
+        </span>
+        <strong>{contact.name}</strong>
+        <p>{contact.handle}</p>
+      </div>
+      <form
+        className="amount-form page-padding"
+        onSubmit={(event) => {
+          event.preventDefault();
+          preview("Send");
+        }}
+      >
+        <div className="amount-entry">
+          <span aria-hidden="true">$</span>
+          <input
+            ref={input}
+            aria-label="Amount in USD"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "amount-error" : undefined}
+            inputMode="none"
+            autoComplete="off"
+            value={amount}
+            onChange={(event) => updateAmount(event.target.value)}
+            placeholder="0"
+          />
         </div>
-      )}
+        <select className="currency-pill" aria-label="Currency" defaultValue="USD">
+          <option value="USD">USD</option>
+        </select>
+        <input
+          className="payment-note"
+          aria-label="Add a note"
+          placeholder="Add a note"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
+        {error && (
+          <p id="amount-error" role="alert" className="input-error">
+            {error}
+          </p>
+        )}
+        <div className="amount-actions">
+          <button type="button" onClick={() => preview("Request")}>
+            Request
+          </button>
+          <button type="submit">Send</button>
+        </div>
+        <p className="demo-caption">Demo only. No real payments or requests.</p>
+      </form>
+      <div className="amount-keypad page-padding" role="group" aria-label="Amount keypad">
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "backspace"].map((key) => (
+          <button
+            key={key}
+            type="button"
+            aria-label={key === "backspace" ? "Backspace" : key === "." ? "Decimal point" : key}
+            onClick={() => pressKey(key)}
+          >
+            {key === "backspace" ? <Delete /> : key}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TransactionDetails({ transaction, onBack }: { transaction: Txn; onBack: () => void }) {
+  const incoming = transaction.amount > 0;
+  return (
+    <div className="transaction-details">
+      <SubHeader title="Transaction Details" onBack={onBack} />
+      <div className="page-padding">
+        <section className="transaction-profile">
+          <StoreIcon />
+          <h2>{transaction.name}</h2>
+          <p>{transaction.kind}</p>
+          <strong className={incoming ? "received" : ""}>{fmt(transaction.amount, true, 2)}</strong>
+          <p>{transaction.date} · Completed</p>
+        </section>
+        <dl className="transaction-breakdown">
+          <div>
+            <dt>{incoming ? "From" : "To"}</dt>
+            <dd>{transaction.name}</dd>
+          </div>
+          <div>
+            <dt>Category</dt>
+            <dd>{transaction.category}</dd>
+          </div>
+          <div>
+            <dt>Amount</dt>
+            <dd>{fmt(transaction.amount, false, 2)}</dd>
+          </div>
+          <div>
+            <dt>Fee (demo)</dt>
+            <dd>{fmt(0, false, 2)}</dd>
+          </div>
+          <div>
+            <dt>{incoming ? "Total received" : "Total withdrawn"}</dt>
+            <dd>{fmt(transaction.amount, false, 2)}</dd>
+          </div>
+          <div>
+            <dt>Balance after transaction</dt>
+            <dd>{fmt(transaction.balanceAfter, false, 2)}</dd>
+          </div>
+          <div>
+            <dt>Demo transaction ID</dt>
+            <dd>DEMO-{transaction.id}</dd>
+          </div>
+        </dl>
+        <p className="demo-caption">
+          Mock transaction only. No real payment or bank transfer occurred.
+        </p>
+      </div>
     </div>
   );
 }
@@ -473,7 +604,15 @@ function PaymentIcon() {
   );
 }
 
-function WalletScreen({ initialTab, notice }: { initialTab: WalletTab; notice: ShowNotice }) {
+function WalletScreen({
+  initialTab,
+  notice,
+  openTransaction,
+}: {
+  initialTab: WalletTab;
+  notice: ShowNotice;
+  openTransaction: OpenTransaction;
+}) {
   const [tab, setTab] = useState<WalletTab>(initialTab);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -508,9 +647,9 @@ function WalletScreen({ initialTab, notice }: { initialTab: WalletTab; notice: S
                   <Brand />
                   PayPal balance
                 </span>
-                <strong>{fmt(balance)}</strong>
+                <strong>{fmt(balance, false, 2)}</strong>
               </div>
-              <h1>{fmt(balance)}</h1>
+              <h1>{fmt(balance, false, 2)}</h1>
             </section>
             <div className="banks-heading">
               <h2>Banks and cards</h2>
@@ -581,10 +720,10 @@ function WalletScreen({ initialTab, notice }: { initialTab: WalletTab; notice: S
               </label>
             )}
             <h2>Completed</h2>
-            <p className="activity-month">{activityMonth}</p>
+            <p className="activity-month">{activityPeriod}</p>
             <section className="transaction-list" aria-label="Completed transactions">
               {filtered.map((transaction) => (
-                <TxnRow key={transaction.id} transaction={transaction} />
+                <TxnRow key={transaction.id} transaction={transaction} onOpen={openTransaction} />
               ))}
               {filtered.length === 0 && <p className="empty-results">No transactions found.</p>}
             </section>
@@ -817,6 +956,20 @@ export function WalletApp() {
   const [screen, setScreen] = useState<Screen>("login");
   const [walletTab, setWalletTab] = useState<WalletTab>("wallet");
   const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
+  const [detail, setDetail] = useState<DetailView | null>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const focusDetail = useCallback((element: HTMLElement | null) => element?.focus(), []);
+  const openDetail = (next: DetailView) => {
+    returnFocus.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setDetail(next);
+  };
+  const closeDetail = () => {
+    setDetail(null);
+    requestAnimationFrame(() => returnFocus.current?.focus());
+  };
+  const openTransaction: OpenTransaction = (transaction) =>
+    openDetail({ type: "transaction", transaction });
   const tabbed = screen === "home" || screen === "send" || screen === "wallet";
   const go: Navigate = (next, tab = "wallet") => {
     setWalletTab(tab);
@@ -826,18 +979,51 @@ export function WalletApp() {
     setNotice({ title, message });
   return (
     <div className="wallet-viewport">
-      <div className={`wallet-app screen-${screen}`}>
+      <div className={`wallet-app screen-${detail?.type ?? screen}`}>
         <StatusBar screen={screen} />
-        <main key={screen} className="screen-content" aria-label={`${screen} screen`}>
+        <main
+          key={screen}
+          hidden={detail !== null}
+          className="screen-content"
+          aria-label={`${screen} screen`}
+        >
           {screen === "login" && <Login go={go} notice={showNotice} />}
-          {screen === "home" && <HomeScreen go={go} notice={showNotice} />}
-          {screen === "send" && <SendScreen go={go} notice={showNotice} />}
-          {screen === "wallet" && <WalletScreen initialTab={walletTab} notice={showNotice} />}
+          {screen === "home" && (
+            <HomeScreen go={go} notice={showNotice} openTransaction={openTransaction} />
+          )}
+          {screen === "send" && (
+            <SendScreen
+              go={go}
+              notice={showNotice}
+              openAmount={(contact) => openDetail({ type: "amount", contact })}
+            />
+          )}
+          {screen === "wallet" && (
+            <WalletScreen
+              initialTab={walletTab}
+              notice={showNotice}
+              openTransaction={openTransaction}
+            />
+          )}
           {screen === "notifications" && <Notifications go={go} notice={showNotice} />}
           {screen === "profile" && <Profile go={go} notice={showNotice} />}
           {screen === "menu" && <MenuScreen go={go} notice={showNotice} />}
         </main>
-        {tabbed && <BottomNav screen={screen} go={go} />}
+        {detail && (
+          <main
+            className="screen-content"
+            aria-label={detail.type === "amount" ? "Amount screen" : "Transaction Details screen"}
+            tabIndex={-1}
+            ref={focusDetail}
+          >
+            {detail.type === "amount" ? (
+              <AmountScreen contact={detail.contact} onBack={closeDetail} notice={showNotice} />
+            ) : (
+              <TransactionDetails transaction={detail.transaction} onBack={closeDetail} />
+            )}
+          </main>
+        )}
+        {tabbed && !detail && <BottomNav screen={screen} go={go} />}
         {notice && (
           <div className="mock-overlay">
             <section

@@ -300,6 +300,13 @@
   gap: calc(18 * var(--px));
   margin-left: calc(-6 * var(--px));
 }
+.transaction-button {
+  display: block;
+  width: 100%;
+}
+.transaction-button:focus-visible {
+  border-radius: calc(12 * var(--px));
+}
 .transaction-heading h3 {
   font-size: calc(24 * var(--px));
   font-weight: 750;
@@ -352,6 +359,138 @@
 }
 .received {
   color: #008563;
+}
+.screen-amount,
+.screen-transaction {
+  background: #fff;
+}
+.amount-screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.amount-recipient,
+.transaction-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8 * var(--px));
+  text-align: center;
+}
+.recipient-avatar {
+  display: grid;
+  place-items: center;
+  width: calc(96 * var(--px));
+  height: calc(96 * var(--px));
+  border-radius: 50%;
+  background: #dbeeff;
+  color: #003087;
+  font-weight: 750;
+}
+.amount-recipient p,
+.transaction-profile p,
+.demo-caption {
+  color: var(--wallet-muted);
+}
+.amount-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(24 * var(--px));
+  padding-top: calc(36 * var(--px));
+}
+.amount-entry {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  font-size: calc(80 * var(--px));
+}
+.amount-entry input {
+  width: 75%;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+.amount-entry input:focus-visible,
+.payment-note:focus-visible,
+.currency-pill:focus-visible {
+  outline: 2px solid var(--wallet-blue);
+  outline-offset: 3px;
+}
+.currency-pill {
+  border-radius: 999px;
+  padding: calc(12 * var(--px)) calc(28 * var(--px));
+  background: #eff1f9;
+  font-size: max(16px, calc(24 * var(--px)));
+}
+.payment-note {
+  width: 100%;
+  padding: calc(18 * var(--px));
+  text-align: center;
+  font-size: max(16px, calc(24 * var(--px))) !important;
+}
+.amount-actions {
+  display: flex;
+  gap: calc(24 * var(--px));
+  width: 100%;
+}
+.amount-actions button {
+  flex: 1;
+  min-height: 44px;
+  padding: calc(20 * var(--px));
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  font-weight: 750;
+  text-align: center;
+}
+.demo-caption {
+  font-size: max(12px, calc(20 * var(--px)));
+  text-align: center;
+}
+.amount-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: calc(8 * var(--px));
+  margin-top: auto;
+  padding-block: calc(24 * var(--px));
+}
+.amount-keypad button {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  height: calc(94 * var(--px));
+  font-size: calc(40 * var(--px));
+  border-radius: calc(16 * var(--px));
+}
+.amount-keypad button:active {
+  background: #eff1f9;
+}
+.transaction-profile {
+  padding-block: calc(30 * var(--px));
+}
+.transaction-profile h2 {
+  font-size: calc(30 * var(--px));
+}
+.transaction-profile > strong {
+  font-size: calc(56 * var(--px));
+}
+.transaction-breakdown {
+  margin-block: calc(30 * var(--px));
+}
+.transaction-breakdown > div {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(24 * var(--px));
+  padding-block: calc(22 * var(--px));
+  border-bottom: 1px solid #ddd;
+}
+.transaction-breakdown dd {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.transaction-details .demo-caption {
+  padding-bottom: calc(30 * var(--px));
 }
 .see-more {
   width: 100%;

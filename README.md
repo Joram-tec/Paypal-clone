@@ -1,9 +1,20 @@
 # Pesa Wallet — mobile money demo
 
 A mock mobile money wallet: login screen, balance, send/request, wallet cards and
-activity, all in USD. The wallet shows US$0, with nine mock receipts each paired
+activity, all in USD. The wallet shows US$0.00, with nine mock receipts each paired
 with an equal bank withdrawal (US$135,000 in and out). No real payments, no real
 logins, and nothing is sent anywhere.
+
+The receipt/withdrawal pairs span June to October 2026, spaced two to three weeks
+apart with matching dates within each pair. Tap a transaction on Home or Activity
+for its read-only amount, fee (zero in this demo), total and running balance.
+Back returns to the same list, retaining Activity search and filters.
+
+In Send/Request, tap a contact to open Amount: recipient initials/name/handle,
+USD amount, note, Request/Send buttons and an on-screen numeric keypad.
+USD is the only supported currency. A physical keyboard also works in the amount
+field. Both actions show a demo preview only; they never send money, create a
+real request, or change the balance or history.
 
 Built with React, TanStack Start and Tailwind CSS. Requires **Node.js 22 or newer**.
 Deployment uses **Bun 1.4.2** and the committed lockfile for reproducible installs.
