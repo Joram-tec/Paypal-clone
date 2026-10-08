@@ -121,6 +121,17 @@ are cached; this does not add real payments or persist wallet changes.
 New versions become active after all open app windows/tabs are closed and reopened;
 an update will not forcibly reload an in-progress interaction.
 
+The simulated time/signal/battery bar appears only in desktop browser previews.
+Mobile browsers (including touch-device landscape views) and standalone windows
+use the device's native status bar. Safe-area padding protects content around
+notches and the home indicator; pinch-to-zoom remains enabled.
+
+Installation icons use the [PayPal double-P artwork from PayPal's asset server](https://www.paypalobjects.com/webstatic/icon/pp258.png),
+resized onto a white background for the favicon, iOS and Android sizes.
+PayPal's name and logo belong to PayPal; this is an unaffiliated UI demo, not the
+official PayPal app. If an existing installation keeps its old icon, remove its
+home-screen shortcut/app and add it again from the updated site.
+
 `npm run build:pages` defaults to `/Paypal-clone/`. To check installation locally,
 run `npm run build:pages` followed by
 `npm run preview -- --config vite.pages.config.ts`, then open the printed address

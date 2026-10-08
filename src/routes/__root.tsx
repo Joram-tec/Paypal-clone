@@ -77,7 +77,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1.0, viewport-fit=cover",
+      },
       { title: "Pesa Wallet" },
       { name: "description", content: "Mobile money wallet mock app." },
       { property: "og:type", content: "website" },
@@ -85,7 +88,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/icons/favicon-32.png", type: "image/png", sizes: "32x32" },
+      {
+        rel: "apple-touch-icon",
+        href: "/icons/apple-touch-icon.png?v=2",
+        sizes: "180x180",
+      },
     ],
   }),
   shellComponent: RootShell,

@@ -32,7 +32,11 @@ describe("Pesa Wallet PWA", () => {
     const icon = manifest.icons.find(
       (entry: { sizes: string }) => entry.sizes === `${size}x${size}`,
     );
-    expect(icon).toMatchObject({ type: "image/png", purpose: "any" });
+    expect(icon).toMatchObject({
+      src: `icons/paypal-${size}.png`,
+      type: "image/png",
+      purpose: "any",
+    });
     expectPngSize(icon.src, size);
   });
 
@@ -47,11 +51,50 @@ describe("Pesa Wallet PWA", () => {
       manifest.theme_color,
     );
     expect(document.querySelector('meta[name="viewport"]')?.getAttribute("content")).toBe(
-      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
+      "width=device-width, initial-scale=1.0, viewport-fit=cover",
     );
     expect(document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute("href")).toBe(
-      "%BASE_URL%icons/apple-touch-icon.png",
+      "%BASE_URL%icons/apple-touch-icon.png?v=2",
     );
+    expect(document.querySelector('link[rel="icon"]')?.getAttribute("href")).toBe(
+      "%BASE_URL%icons/favicon-32.png",
+    );
+    expectPngSize("icons/favicon-32.png", 32);
     expectPngSize("icons/apple-touch-icon.png", 180);
+  });
+
+  it("hides the preview status bar on mobile and standalone displays", () => {
+    const style = globalThis.document.createElement("style");
+    style.textContent = readFileSync(
+      resolve(process.cwd(), "src", "components", "wallet", "wallet.css"),
+      "utf8",
+    );
+    globalThis.document.head.append(style);
+    try {
+      const rules = Array.from(style.sheet!.cssRules);
+      const mobileRule = rules.find(
+        (rule): rule is CSSMediaRule =>
+          rule instanceof CSSMediaRule && rule.conditionText.includes("(display-mode: standalone)"),
+      );
+      expect(mobileRule?.conditionText).toContain("(max-width: 640px)");
+      expect(mobileRule?.conditionText).toContain("(hover: none) and (pointer: coarse)");
+      const statusRule = Array.from(mobileRule!.cssRules).find(
+        (rule): rule is CSSStyleRule =>
+          rule instanceof CSSStyleRule && rule.selectorText === ".status-bar",
+      );
+      expect(statusRule?.style.getPropertyValue("display")).toBe("none");
+      const appRule = rules.find(
+        (rule): rule is CSSStyleRule =>
+          rule instanceof CSSStyleRule && rule.selectorText === ".wallet-app",
+      );
+      expect(appRule?.style.getPropertyValue("box-sizing")).toBe("border-box");
+      for (const side of ["top", "bottom", "left", "right"]) {
+        expect(appRule?.style.getPropertyValue(`padding-${side}`)).toBe(
+          `env(safe-area-inset-${side}, 0px)`,
+        );
+      }
+    } finally {
+      style.remove();
+    }
   });
 });
