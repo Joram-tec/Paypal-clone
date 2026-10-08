@@ -44,10 +44,17 @@ jobs:
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
 
+      - name: Check PWA metadata and icons
+        run: npm run test -- src/test/pwa.test.ts
+
       - name: Check the build actually produced a site
         run: |
           test -s dist/index.html || { echo "dist/index.html is missing"; exit 1; }
           grep -q "assets/" dist/index.html || { echo "no compiled assets referenced"; exit 1; }
+          test -s dist/manifest.json || { echo "PWA manifest is missing"; exit 1; }
+          test -s dist/sw.js || { echo "PWA service worker is missing"; exit 1; }
+          test -s dist/registerSW.js || { echo "PWA registration script is missing"; exit 1; }
+          grep -q "registerSW.js" dist/index.html || { echo "service worker is not registered"; exit 1; }
 
       - name: Upload the site
         uses: actions/upload-pages-artifact@v3

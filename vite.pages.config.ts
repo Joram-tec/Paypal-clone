@@ -6,13 +6,28 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   root: "pages",
-  // GitHub Pages serves a project site from /<repository-name>/, so asset URLs
-  // need that prefix. Set BASE_PATH in CI; leave it unset for a root-domain host.
-  base: process.env["BASE_PATH"] || "/",
-  plugins: [react(), tailwindcss()],
+  // Keep the default aligned with the install URL in public/manifest.json.
+  base: process.env["BASE_PATH"] || "/Paypal-clone/",
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      manifest: false,
+      injectRegister: "script",
+      includeAssets: ["favicon.ico", "manifest.json", "icons/*.png"],
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,png,svg,ico,woff,woff2}"],
+        cleanupOutdatedCaches: true,
+        // Activate updates after the app closes, never during a wallet interaction.
+        skipWaiting: false,
+        clientsClaim: true,
+      },
+    }),
+  ],
   publicDir: "../public",
   build: {
     outDir: "../dist",

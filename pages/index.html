@@ -2,7 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#0070ba" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Pesa Wallet" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Pesa Wallet — Mobile money demo</title>
     <meta
       name="description"
@@ -16,6 +24,8 @@
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="manifest" href="%BASE_URL%manifest.json" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%icons/apple-touch-icon.png" />
   </head>
   <body>
     <div id="root"></div>

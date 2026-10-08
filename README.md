@@ -103,6 +103,33 @@ Send/Request and Wallet. The bottom bar should highlight the tab you're on.
 
 ---
 
+## Install on your phone
+
+The GitHub Pages version is a Progressive Web App at
+<https://joram-tec.github.io/Paypal-clone/>.
+
+- **Android (Chrome):** open the site, then choose **Install app** or
+  **Add to Home screen** from the browser menu.
+- **iPhone/iPad (Safari):** open the site, tap **Share → Add to Home Screen**,
+  leave **Open as Web App** enabled if shown, then tap **Add**. iOS does not show
+  an automatic install prompt.
+
+Launch the home-screen icon to use the wallet in its own standalone window.
+Installation requires HTTPS (or localhost for development). After the first online
+visit finishes caching, the demo screens also load offline. Only static app files
+are cached; this does not add real payments or persist wallet changes.
+New versions become active after all open app windows/tabs are closed and reopened;
+an update will not forcibly reload an in-progress interaction.
+
+`npm run build:pages` defaults to `/Paypal-clone/`. To check installation locally,
+run `npm run build:pages` followed by
+`npm run preview -- --config vite.pages.config.ts`, then open the printed address
+with `/Paypal-clone/` appended. The development server does not install a service worker.
+If deploying under another path, set `BASE_PATH` and update `id`, `start_url`, and
+`scope` in `public/manifest.json` to match. Lovable's server build is unchanged.
+
+---
+
 ## What's in here
 
 | Path | What it does |
@@ -112,6 +139,8 @@ Send/Request and Wallet. The bottom bar should highlight the tab you're on.
 | `src/styles.css` | Colours, fonts and spacing |
 | `pages/` | Entry point for the static GitHub Pages build |
 | `vite.pages.config.ts` | Build recipe for that static version (`npm run build:pages`) |
+| `public/manifest.json` | App identity, standalone display and installation icons |
+| `public/icons/` | Android app icons and the iOS home-screen icon |
 | `.github/workflows/deploy.yml` | The automatic deploy to GitHub Pages |
 
 The normal `npm run build` still produces the version Lovable hosts, so nothing here
