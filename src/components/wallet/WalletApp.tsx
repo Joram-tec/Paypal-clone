@@ -29,6 +29,10 @@ import {
   EyeOff,
   X,
   Delete,
+  Plus,
+  CheckCircle,
+  ChevronDown,
+  Calendar,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -41,12 +45,29 @@ import {
   appVersion,
   activityPeriod,
   notifications,
+  invoices,
   type Txn,
   type Contact,
+  type Invoice,
+  type InvoiceItem,
 } from "./data";
 import "./wallet.css";
 
-type Screen = "login" | "home" | "send" | "wallet" | "notifications" | "profile" | "menu";
+type Screen =
+  | "login"
+  | "home"
+  | "send"
+  | "wallet"
+  | "notifications"
+  | "profile"
+  | "menu"
+  | "invoices"
+  | "invoice-create"
+  | "invoice-item"
+  | "invoice-tax"
+  | "invoice-options"
+  | "invoice-preview"
+  | "invoice-success";
 type WalletTab = "wallet" | "activity";
 type Navigate = (screen: Screen, tab?: WalletTab) => void;
 type ShowNotice = (title: string, message?: string) => void;
@@ -144,16 +165,19 @@ function Toolbar({
   go,
   send = false,
   notice,
+  showLogo = true,
 }: {
   go: Navigate;
   send?: boolean;
   notice: ShowNotice;
+  showLogo?: boolean;
 }) {
   return (
     <div className="toolbar">
       <RoundBtn label="Menu" onClick={() => go("menu")}>
         <Menu />
       </RoundBtn>
+      {showLogo && <Brand />}
       <div>
         {send ? (
           <RoundBtn
@@ -167,9 +191,6 @@ function Toolbar({
             <Bell />
           </RoundBtn>
         )}
-        <RoundBtn label="Profile" onClick={() => go("profile")}>
-          <User />
-        </RoundBtn>
       </div>
     </div>
   );
@@ -202,13 +223,11 @@ function TxnRow({ transaction, onOpen }: { transaction: Txn; onOpen: OpenTransac
           <StoreIcon />
           <div>
             <h3>{transaction.name}</h3>
-            <p>{transaction.date}</p>
+            <p>{transaction.status || transaction.kind}</p>
           </div>
         </div>
         <div className="transaction-summary">
-          <span>
-            {transaction.kind} · {transaction.category}
-          </span>
+          <span>{transaction.date}</span>
           <strong className={transaction.amount > 0 ? "received" : ""}>
             {fmt(transaction.amount, true)}
           </strong>
@@ -867,6 +886,460 @@ function Profile({ go, notice }: { go: Navigate; notice: ShowNotice }) {
   );
 }
 
+function InvoicesListScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("Active");
+  const [status, setStatus] = useState("All");
+  const filtered = invoices.filter(
+    (invoice) =>
+      invoice.email.toLowerCase().includes(search.toLowerCase()) &&
+      (filter === "All" || (filter === "Active" && invoice.status === "Unpaid")) &&
+      (status === "All" || invoice.status === status),
+  );
+
+  return (
+    <div className="invoices-screen page-padding">
+      <Toolbar go={go} notice={notice} />
+      <h1>Invoices</h1>
+      <div className="invoice-filters">
+        <SearchBox placeholder="Search invoices" value={search} onChange={setSearch} />
+        <div className="filter-dropdowns">
+          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="Active">Filter: Active</option>
+            <option value="All">Filter: All</option>
+          </select>
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="All">Status: All</option>
+            <option value="Unpaid">Status: Unpaid</option>
+            <option value="Paid">Status: Paid</option>
+            <option value="Canceled">Status: Canceled</option>
+          </select>
+        </div>
+      </div>
+      <section className="invoice-list">
+        {filtered.map((invoice) => (
+          <article key={invoice.id} className="invoice-item">
+            <button
+              className="invoice-item-button"
+              onClick={() => notice("Invoice", `Invoice ${invoice.number} for ${invoice.email}`)}
+            >
+              <div className="invoice-item-header">
+                <span className="invoice-email">{invoice.email}</span>
+                <span className={`invoice-status ${invoice.status.toLowerCase()}`}>
+                  {invoice.statusDetail}
+                </span>
+              </div>
+              <div className="invoice-item-footer">
+                <span>{invoice.date}</span>
+                <strong>{fmt(invoice.amount, true)}</strong>
+              </div>
+            </button>
+          </article>
+        ))}
+        {filtered.length === 0 && <p className="empty-results">No invoices found.</p>}
+      </section>
+      <button
+        className="fab"
+        aria-label="Create new invoice"
+        onClick={() => go("invoice-create")}
+      >
+        <Plus />
+      </button>
+    </div>
+  );
+}
+
+function InvoicePreviewScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
+  const total = 190;
+  const subtotal = 190;
+  const tax = 0;
+  const discount = 0;
+
+  return (
+    <div className="invoice-preview-screen page-padding">
+      <SubHeader title="Preview Invoice" onBack={() => go("invoice-create")} />
+      <div className="invoice-preview-content">
+        <div className="invoice-amount">
+          <span>Amount Due</span>
+          <strong>${total.toFixed(2)} USD</strong>
+        </div>
+        <div className="invoice-details">
+          <div className="invoice-detail-row">
+            <span>Bill to</span>
+            <strong>client@example.com</strong>
+          </div>
+          <div className="invoice-detail-row">
+            <span>Invoice number</span>
+            <strong>0001</strong>
+          </div>
+          <div className="invoice-detail-row">
+            <span>Invoice date</span>
+            <strong>7 Oct 2026</strong>
+          </div>
+          <div className="invoice-detail-row">
+            <span>Due date</span>
+            <strong>Due on receipt</strong>
+          </div>
+        </div>
+        <div className="invoice-line-items">
+          <h3>Items</h3>
+          <div className="line-item">
+            <div className="line-item-info">
+              <strong>Web Design Services</strong>
+              <span>Homepage redesign</span>
+            </div>
+            <strong>$150.00</strong>
+          </div>
+          <div className="line-item">
+            <div className="line-item-info">
+              <strong>Consulting</strong>
+              <span>Technical consultation</span>
+            </div>
+            <strong>$40.00</strong>
+          </div>
+        </div>
+        <div className="invoice-totals">
+          <div className="total-row">
+            <span>Subtotal</span>
+            <strong>${subtotal.toFixed(2)}</strong>
+          </div>
+          {tax > 0 && (
+            <div className="total-row">
+              <span>Tax</span>
+              <strong>${tax.toFixed(2)}</strong>
+            </div>
+          )}
+          {discount > 0 && (
+            <div className="total-row discount">
+              <span>Discount</span>
+              <strong>-${discount.toFixed(2)}</strong>
+            </div>
+          )}
+          <div className="total-row final">
+            <span>Total</span>
+            <strong>${total.toFixed(2)} USD</strong>
+          </div>
+        </div>
+        <button
+          className="send-invoice-btn"
+          onClick={() => go("invoice-success")}
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceSuccessScreen({ go }: { go: Navigate }) {
+  return (
+    <div className="invoice-success-screen page-padding">
+      <div className="success-content">
+        <div className="success-icon">
+          <CheckCircle />
+        </div>
+        <h2>Your invoice has been sent.</h2>
+        <p>Invoice 0001 has been sent to client@example.com</p>
+        <button className="done-btn" onClick={() => go("invoices")}>
+          Done
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceCreateScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
+  const [step, setStep] = useState<"item" | "tax" | "options">("item");
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [taxes, setTaxes] = useState<{ label: string; rate: number; description?: string }[]>([]);
+  const [currentItem, setCurrentItem] = useState<Partial<InvoiceItem>>({
+    name: "",
+    description: "",
+    price: 0,
+    quantity: 1,
+  });
+  const [currentTax, setCurrentTax] = useState({ label: "", rate: 0, description: "" });
+  const [options, setOptions] = useState({
+    terms: "",
+    invoiceNumber: "0001",
+    invoiceDate: new Date().toISOString().split("T")[0],
+    dueDate: "Due on receipt",
+    reference: "",
+    allowPartial: false,
+  });
+
+  const addItem = () => {
+    if (currentItem.name && currentItem.price) {
+      setItems([...items, currentItem as InvoiceItem]);
+      setCurrentItem({ name: "", description: "", price: 0, quantity: 1 });
+    }
+  };
+
+  const addTax = () => {
+    if (currentTax.label && currentTax.rate) {
+      setTaxes([...taxes, currentTax]);
+      setCurrentTax({ label: "", rate: 0, description: "" });
+    }
+  };
+
+  const calculateTotal = () => {
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const taxTotal = taxes.reduce((sum, tax) => sum + (subtotal * tax.rate) / 100, 0);
+    return subtotal + taxTotal;
+  };
+
+  return (
+    <div className="invoice-create-screen page-padding">
+      <SubHeader title="Create Invoice" onBack={() => go("invoices")} />
+      {step === "item" && (
+        <div className="invoice-form-section">
+          <h2>Add New Item</h2>
+          <div className="form-field">
+            <label>Item name/service</label>
+            <input
+              value={currentItem.name}
+              onChange={(e) => setCurrentItem({ ...currentItem, name: e.target.value })}
+              placeholder="Enter item name"
+            />
+          </div>
+          <div className="form-field">
+            <label>Detailed description</label>
+            <textarea
+              value={currentItem.description}
+              onChange={(e) => setCurrentItem({ ...currentItem, description: e.target.value })}
+              placeholder="Enter description"
+              rows={3}
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-field">
+              <label>Price (USD)</label>
+              <input
+                type="number"
+                value={currentItem.price || ""}
+                onChange={(e) => setCurrentItem({ ...currentItem, price: Number(e.target.value) })}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="form-field">
+              <label>Quantity</label>
+              <input
+                type="number"
+                value={currentItem.quantity}
+                onChange={(e) => setCurrentItem({ ...currentItem, quantity: Number(e.target.value) })}
+                min="1"
+              />
+            </div>
+          </div>
+          <div className="form-field">
+            <label>Tax</label>
+            <select
+              value={currentItem.tax || ""}
+              onChange={(e) => setCurrentItem({ ...currentItem, tax: Number(e.target.value) })}
+            >
+              <option value="">No tax</option>
+              {taxes.map((tax, index) => (
+                <option key={index} value={tax.rate}>
+                  {tax.label} ({tax.rate}%)
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>Discount</label>
+            <div className="discount-toggle">
+              <button
+                type="button"
+                className={!currentItem.discount ? "active" : ""}
+                onClick={() => setCurrentItem({ ...currentItem, discount: undefined })}
+              >
+                None
+              </button>
+              <button
+                type="button"
+                className={typeof currentItem.discount === "number" ? "active" : ""}
+                onClick={() => setCurrentItem({ ...currentItem, discount: 0 })}
+              >
+                USD
+              </button>
+              <button
+                type="button"
+                className={typeof currentItem.discount === "number" ? "active" : ""}
+                onClick={() => setCurrentItem({ ...currentItem, discount: 0 })}
+              >
+                %
+              </button>
+            </div>
+            {typeof currentItem.discount === "number" && (
+              <input
+                type="number"
+                value={currentItem.discount}
+                onChange={(e) => setCurrentItem({ ...currentItem, discount: Number(e.target.value) })}
+                placeholder="0"
+              />
+            )}
+          </div>
+          <div className="form-field checkbox-field">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={false}
+                onChange={() => {}}
+              />
+              Save item for future invoices
+            </label>
+          </div>
+          <div className="form-actions">
+            <button onClick={() => setStep("tax")}>Add Tax</button>
+            <button onClick={addItem}>Save Item</button>
+          </div>
+          {items.length > 0 && (
+            <div className="items-list">
+              <h3>Added Items</h3>
+              {items.map((item, index) => (
+                <div key={index} className="item-summary">
+                  <span>{item.name}</span>
+                  <span>{fmt(item.price * item.quantity, false, 2)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {step === "tax" && (
+        <div className="invoice-form-section">
+          <h2>Add New Tax</h2>
+          <div className="form-field">
+            <label>Tax label</label>
+            <input
+              value={currentTax.label}
+              onChange={(e) => setCurrentTax({ ...currentTax, label: e.target.value })}
+              placeholder="e.g., VAT"
+            />
+          </div>
+          <div className="form-field">
+            <label>Tax rate (%)</label>
+            <input
+              type="number"
+              value={currentTax.rate || ""}
+              onChange={(e) => setCurrentTax({ ...currentTax, rate: Number(e.target.value) })}
+              placeholder="0"
+            />
+          </div>
+          <div className="form-field">
+            <label>Tax description (optional)</label>
+            <textarea
+              value={currentTax.description}
+              onChange={(e) => setCurrentTax({ ...currentTax, description: e.target.value })}
+              placeholder="Enter description"
+              rows={2}
+            />
+          </div>
+          <div className="form-field checkbox-field">
+            <label className="checkbox-label">
+              <input type="checkbox" checked={false} onChange={() => {}} />
+              Save this tax for future invoices
+            </label>
+          </div>
+          <div className="form-actions">
+            <button onClick={() => setStep("item")}>Back</button>
+            <button onClick={addTax}>Save Tax</button>
+          </div>
+          {taxes.length > 0 && (
+            <div className="taxes-list">
+              <h3>Added Taxes</h3>
+              {taxes.map((tax, index) => (
+                <div key={index} className="tax-summary">
+                  <span>{tax.label}</span>
+                  <span>{tax.rate}%</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {step === "options" && (
+        <div className="invoice-form-section">
+          <h2>More Options</h2>
+          <div className="form-field">
+            <label>Terms & conditions</label>
+            <textarea
+              value={options.terms}
+              onChange={(e) => setOptions({ ...options, terms: e.target.value })}
+              placeholder="Enter terms and conditions"
+              rows={4}
+            />
+          </div>
+          <div className="form-field">
+            <label>Invoice number</label>
+            <input
+              value={options.invoiceNumber}
+              onChange={(e) => setOptions({ ...options, invoiceNumber: e.target.value })}
+              placeholder="0001"
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-field">
+              <label>Invoice date</label>
+              <input
+                type="date"
+                value={options.invoiceDate}
+                onChange={(e) => setOptions({ ...options, invoiceDate: e.target.value })}
+              />
+            </div>
+            <div className="form-field">
+              <label>Due date</label>
+              <select
+                value={options.dueDate}
+                onChange={(e) => setOptions({ ...options, dueDate: e.target.value })}
+              >
+                <option value="Due on receipt">Due on receipt</option>
+                <option value="No due date">No due date</option>
+                <option value="Due in 10 days">Due in 10 days</option>
+                <option value="Due in 15 days">Due in 15 days</option>
+                <option value="Due in 30 days">Due in 30 days</option>
+                <option value="Due in 45 days">Due in 45 days</option>
+                <option value="Due in 60 days">Due in 60 days</option>
+                <option value="Due in 90 days">Due in 90 days</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-field">
+            <label>Reference (optional)</label>
+            <input
+              value={options.reference}
+              onChange={(e) => setOptions({ ...options, reference: e.target.value })}
+              placeholder="Enter reference"
+            />
+          </div>
+          <div className="form-field checkbox-field">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={options.allowPartial}
+                onChange={(e) => setOptions({ ...options, allowPartial: e.target.checked })}
+              />
+              Allow partial payments
+            </label>
+          </div>
+          <div className="form-field">
+            <label>Attach files</label>
+            <div className="file-dropzone">
+              <p>Drag and drop files here or click to upload</p>
+            </div>
+          </div>
+          <div className="form-actions">
+            <button onClick={() => setStep("tax")}>Back</button>
+            <button onClick={() => go("invoice-preview")}>Preview Invoice</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MenuScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
   const groups: {
     title: string;
@@ -943,9 +1416,17 @@ function BottomNav({ screen, go }: { screen: Screen; go: Navigate }) {
         </span>
         <span>Send/Request</span>
       </button>
-      <button aria-current={screen === "wallet" ? "page" : undefined} onClick={() => go("wallet")}>
+      <button onClick={() => go("wallet")}>
         <Wallet />
-        <span>Wallet</span>
+        <span>Add card or bank</span>
+      </button>
+      <button onClick={() => go("invoices")}>
+        <FileText />
+        <span>Create an invoice</span>
+      </button>
+      <button onClick={() => go("menu")}>
+        <MoreVertical />
+        <span>More</span>
       </button>
     </nav>
   );
@@ -969,7 +1450,7 @@ export function WalletApp() {
   };
   const openTransaction: OpenTransaction = (transaction) =>
     openDetail({ type: "transaction", transaction });
-  const tabbed = screen === "home" || screen === "send" || screen === "wallet";
+  const tabbed = screen === "home" || screen === "send" || screen === "wallet" || screen === "invoices";
   const go: Navigate = (next, tab = "wallet") => {
     setWalletTab(tab);
     setScreen(next);
@@ -1007,6 +1488,10 @@ export function WalletApp() {
           {screen === "notifications" && <Notifications go={go} notice={showNotice} />}
           {screen === "profile" && <Profile go={go} notice={showNotice} />}
           {screen === "menu" && <MenuScreen go={go} notice={showNotice} />}
+          {screen === "invoices" && <InvoicesListScreen go={go} notice={showNotice} />}
+          {screen === "invoice-create" && <InvoiceCreateScreen go={go} notice={showNotice} />}
+          {screen === "invoice-preview" && <InvoicePreviewScreen go={go} notice={showNotice} />}
+          {screen === "invoice-success" && <InvoiceSuccessScreen go={go} />}
         </main>
         {detail && (
           <main
