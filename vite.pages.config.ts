@@ -25,6 +25,8 @@ export default defineConfig({
         // Activate updates after the app closes, never during a wallet interaction.
         skipWaiting: false,
         clientsClaim: true,
+        // Cache version for cache invalidation
+        cacheId: "paypal-clone-v2.1.0",
       },
     }),
   ],

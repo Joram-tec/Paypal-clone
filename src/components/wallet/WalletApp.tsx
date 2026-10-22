@@ -407,6 +407,32 @@ function HomeScreen({
           See more
         </button>
       </section>
+      <div className="home-action-bar">
+        <button className="action-icon" onClick={() => go("send")}>
+          <span className="action-icon-circle">
+            <ArrowDownUp />
+          </span>
+          <span>Send / Request</span>
+        </button>
+        <button className="action-icon" onClick={() => go("wallet")}>
+          <span className="action-icon-circle">
+            <Wallet />
+          </span>
+          <span>Add card or bank</span>
+        </button>
+        <button className="action-icon" onClick={() => go("invoices")}>
+          <span className="action-icon-circle">
+            <FileText />
+          </span>
+          <span>Create an invoice</span>
+        </button>
+        <button className="action-icon" onClick={() => go("menu")}>
+          <span className="action-icon-circle">
+            <MoreVertical />
+          </span>
+          <span>More</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -1400,32 +1426,41 @@ function MenuScreen({ go, notice }: { go: Navigate; notice: ShowNotice }) {
 function BottomNav({ screen, go }: { screen: Screen; go: Navigate }) {
   return (
     <nav className="bottom-nav" aria-label="Main navigation">
-      <button aria-current={screen === "home" ? "page" : undefined} onClick={() => go("home")}>
-        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" aria-hidden="true">
-          <path d="M1 20 20 3l19 17M6 17v19h28V17M1 36h38M16 36V24h8v12" strokeLinejoin="round" />
-        </svg>
-        <span>Home</span>
-      </button>
       <button
-        className="send-nav"
+        className="action-icon"
         aria-current={screen === "send" ? "page" : undefined}
         onClick={() => go("send")}
       >
-        <span className="send-nav-icon">
+        <span className="action-icon-circle">
           <ArrowDownUp />
         </span>
-        <span>Send/Request</span>
+        <span>Send / Request</span>
       </button>
-      <button onClick={() => go("wallet")}>
-        <Wallet />
+      <button
+        className="action-icon"
+        onClick={() => go("wallet")}
+      >
+        <span className="action-icon-circle">
+          <Wallet />
+        </span>
         <span>Add card or bank</span>
       </button>
-      <button onClick={() => go("invoices")}>
-        <FileText />
+      <button
+        className="action-icon"
+        onClick={() => go("invoices")}
+      >
+        <span className="action-icon-circle">
+          <FileText />
+        </span>
         <span>Create an invoice</span>
       </button>
-      <button onClick={() => go("menu")}>
-        <MoreVertical />
+      <button
+        className="action-icon"
+        onClick={() => go("menu")}
+      >
+        <span className="action-icon-circle">
+          <MoreVertical />
+        </span>
         <span>More</span>
       </button>
     </nav>
@@ -1437,6 +1472,7 @@ export function WalletApp() {
   const [walletTab, setWalletTab] = useState<WalletTab>("wallet");
   const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
   const [detail, setDetail] = useState<DetailView | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const returnFocus = useRef<HTMLElement | null>(null);
   const focusDetail = useCallback((element: HTMLElement | null) => element?.focus(), []);
   const openDetail = (next: DetailView) => {
@@ -1450,10 +1486,14 @@ export function WalletApp() {
   };
   const openTransaction: OpenTransaction = (transaction) =>
     openDetail({ type: "transaction", transaction });
-  const tabbed = screen === "home" || screen === "send" || screen === "wallet" || screen === "invoices";
+  const tabbed = screen === "send" || screen === "wallet" || screen === "menu";
   const go: Navigate = (next, tab = "wallet") => {
-    setWalletTab(tab);
-    setScreen(next);
+    setIsLoading(true);
+    setTimeout(() => {
+      setWalletTab(tab);
+      setScreen(next);
+      setTimeout(() => setIsLoading(false), 300);
+    }, 100);
   };
   const showNotice: ShowNotice = (title, message = "This feature is a local visual demo.") =>
     setNotice({ title, message });
@@ -1461,6 +1501,7 @@ export function WalletApp() {
     <div className="wallet-viewport">
       <div className={`wallet-app screen-${detail?.type ?? screen}`}>
         <StatusBar screen={screen} />
+        {isLoading && <div className="loading-progress-bar" />}
         <main
           key={screen}
           hidden={detail !== null}
