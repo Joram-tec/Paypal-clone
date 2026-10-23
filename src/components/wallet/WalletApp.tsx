@@ -367,38 +367,6 @@ function HomeScreen({
           <span>PayPal balance</span>
         </span>
       </button>
-      <button
-        className="account-setup"
-        onClick={() =>
-          notice(
-            "Set up your account",
-            "3 of 4 steps completed. Account setup is mocked in this demo.",
-          )
-        }
-      >
-        <span className="setup-progress">
-          <svg viewBox="0 0 88 88" aria-hidden="true">
-            <circle cx="44" cy="44" r="40" fill="none" stroke="#f8f8fa" strokeWidth="5" />
-            <circle
-              cx="44"
-              cy="44"
-              r="40"
-              fill="none"
-              stroke="#0066eb"
-              strokeWidth="5"
-              strokeDasharray="75 100"
-              pathLength="100"
-              strokeLinecap="round"
-              transform="rotate(-90 44 44)"
-            />
-          </svg>
-          <span>3/4</span>
-        </span>
-        <span>
-          <strong>Set up your account</strong>
-          <span>A few more steps left.</span>
-        </span>
-      </button>
       <section className="transaction-list" aria-label="Recent transactions">
         {txns.slice(0, 6).map((transaction) => (
           <TxnRow key={transaction.id} transaction={transaction} onOpen={openTransaction} />

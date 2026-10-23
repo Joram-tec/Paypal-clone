@@ -241,6 +241,46 @@
   padding-bottom: calc(46 * var(--px));
   background: #eff1f9;
 }
+.home-balance {
+  display: flex;
+  align-items: center;
+  gap: calc(32 * var(--px));
+  width: 100%;
+  height: calc(140 * var(--px));
+  margin-top: calc(24 * var(--px));
+  padding: calc(28 * var(--px));
+  border-radius: calc(24 * var(--px));
+  background: #fff;
+}
+.balance-logo {
+  display: grid;
+  place-items: center;
+  width: calc(64 * var(--px));
+  height: calc(64 * var(--px));
+  border-radius: 50%;
+  background: #f8f7f4;
+}
+.balance-logo .brand {
+  width: calc(30 * var(--px));
+  height: calc(36 * var(--px));
+}
+.home-balance strong {
+  display: block;
+  font-size: calc(44 * var(--px));
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: calc(-1.5 * var(--px));
+  transform: scaleX(0.88);
+  transform-origin: left;
+  color: #050505;
+}
+.home-balance > span > span {
+  display: block;
+  margin-top: calc(12 * var(--px));
+  font-size: calc(20 * var(--px));
+  color: #676767;
+  font-weight: 500;
+}
 .home-action-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -354,6 +394,7 @@
   overflow: hidden;
   border-radius: calc(28 * var(--px));
   background: #fff;
+  margin-top: calc(24 * var(--px));
 }
 .transaction {
   height: calc(240 * var(--px));
